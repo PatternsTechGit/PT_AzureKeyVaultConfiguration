@@ -76,9 +76,9 @@ dotnet user-secrets init
 ```
 
 
-We will add reference of **Microsoft.Azure.AppConfiguration.AspNetCore**  in our BBBAnkAPI project. This nuget allows developers to use Microsoft Azure App Configuration service as a configuration source in their applications. This package adds additional features for ASP.NET Core applications to the existing package Microsoft.Extensions.Configuration.AzureAppConfiguration.
+We will add reference of **Microsoft.Azure.AppConfiguration.AspNetCore**  in our BBBankAPI project. This nuget allows developers to use Microsoft Azure App Configuration service as a configuration source in their applications. This package adds additional features for ASP.NET Core applications to the existing package Microsoft.Extensions.Configuration.AzureAppConfiguration.
 
-To add this package open the **package console manager**, select BBBAnkAPI project and run the following command
+To add this package open the **package console manager**, select BBBankAPI project and run the following command
 
 ```
 dotnet add package Microsoft.Azure.AppConfiguration.AspNetCore
@@ -169,11 +169,85 @@ On a create window enter the key name and the relevant information, select the n
 
 ## Step 5: Read key-Vault value 
 
+We will add reference of **Azure.Identity** in our BBBankAPI project. The Key Vault SDK is using Azure Identity client library, which allows seamless authentication to Key Vault across environments with the code.
 
+To add this package open the **package console manager**, select BBBankAPI project and run the following command
 
+```
+Install-Package Azure.Identity -Version 1.6.1
+```
 
+Open the `program.cs` and add the following code to read the connection string from secret manager. 
 
+```cs
+// Reading App Config's with key-vault.
+var azureAppConfigConString =builder.Configuration.GetConnectionString("AppConfig");
+```
 
+After reading the connection string we will configure the AzureAppConfiguration as below :
+
+```cs
+IConfigurationRoot azureAppConfigSettings = null;
+builder.Host.ConfigureAppConfiguration((hostingContext, config) =>
+{
+    //Configuration Builder based on Azure App Config
+    azureAppConfigSettings = config.Build();
+
+    config.AddAzureAppConfiguration(options =>
+    {
+        //options.Connect(azureAppConfigConString)
+        options.Connect(azureAppConfigConString)
+                .ConfigureKeyVault(kv =>
+                {
+                    kv.SetCredential(new DefaultAzureCredential());
+                });
+    });
+});
+```
+
+Once the azure configuration as done then we will read the **key-vault** value by its key name as below :
+
+```cs
+// example of reading KeyVault reference from Azure App Config inside Program.cs
+var connectionString = azureAppConfigSettings["BBBankAPI:Settings:BBBankDBConnectionString"];
+```
+
+Here variable **connectionString** will get the value received from azure app configuration through key vault secret.
+
+As we are getting the connection string from Azure configuration so we don't need the connection string from **appsettings.json** so we will comment/remove the connection string part from **appsettings.json**
+
+## Step 6: Production environment Setup
+
+Go to **appsettings.json** and add a new key named **AppConfig** with connection string as value. 
+
+```json
+  "AppConfig": "Endpoint=https://bbbankconfigs.azconfig.io;Id=ihvR-l5-s0:8IEbEMHt4vKu/JdP4/BY;Secret=exdCCJBDOQvsO1An0Zzr9627cJ/h6orm/XXXXXX-XXXX"
+```
+
+After setting the app config go to `program.cs` file and use the configurations as below : 
+
+```cs
+// Reading App Config's with key-vault in Production environment.
+// In production use appSettingsFileSettings["AppConfig] in place of azureAppConfigConString
+IConfigurationRoot azureAppConfigSettings = null;
+builder.Host.ConfigureAppConfiguration((hostingContext, config) =>
+{
+    //Configuration Builder based on Azure App Config
+    azureAppConfigSettings = config.Build();
+
+    config.AddAzureAppConfiguration(options =>
+    {
+        options.Connect(configuration["AppConfig"])
+                .ConfigureKeyVault(kv =>
+                {
+                    kv.SetCredential(new DefaultAzureCredential());
+                });
+    });
+});
+```
+
+## Final Output 
+Run the application as see its working.
 
  
 
