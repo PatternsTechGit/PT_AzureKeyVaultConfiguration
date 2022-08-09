@@ -94,7 +94,7 @@ Open the `program.cs` and add the following code to read the connection string f
 
 
 ```cs
-/// // Reading Azure App Config's Connection String
+// Reading Azure App Config's Connection String.
 var azureAppConfigConString = builder.Configuration.GetConnectionString("AppConfig");
 ```
 
@@ -180,7 +180,7 @@ Install-Package Azure.Identity -Version 1.6.1
 Open the `program.cs` and add the following code to read the connection string from secret manager. 
 
 ```cs
-// Reading App Config's with key-vault.
+// Reading Azure App Config's Connection String.
 var azureAppConfigConString =builder.Configuration.GetConnectionString("AppConfig");
 ```
 
@@ -195,7 +195,6 @@ builder.Host.ConfigureAppConfiguration((hostingContext, config) =>
 
     config.AddAzureAppConfiguration(options =>
     {
-        //options.Connect(azureAppConfigConString)
         options.Connect(azureAppConfigConString)
                 .ConfigureKeyVault(kv =>
                 {
@@ -228,7 +227,7 @@ After setting the app config go to `program.cs` file and use the configurations 
 
 ```cs
 // Reading App Config's with key-vault in Production environment.
-// In production use appSettingsFileSettings["AppConfig] in place of azureAppConfigConString
+// In production use configuration["AppConfig] in place of azureAppConfigConString
 IConfigurationRoot azureAppConfigSettings = null;
 builder.Host.ConfigureAppConfiguration((hostingContext, config) =>
 {
